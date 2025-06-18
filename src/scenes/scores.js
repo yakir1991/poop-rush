@@ -69,7 +69,12 @@ class ScoresScene extends Phaser.Scene {
 
     this.menuButton = new Button(
       this,
-      new Button(this, 400, 500, 'blueButton1', 'blueButton2', 'Menu', 'Title'),
+      400,
+      500,
+      'blueButton1',
+      'blueButton2',
+      'Menu',
+      'Title',
     );
 
     document.body.appendChild(createTable(this.scores));
