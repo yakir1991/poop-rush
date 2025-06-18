@@ -12,6 +12,7 @@ export default class GameScene extends Phaser.Scene {
     this.playerJumps = 0; // number of consecutive jumps
     this.addedDung = 0; // keeps track of the added dung coins
     this.healthPoints = 100; // initial health points
+    this.lastPointerTime = 0; // tracks last tap time
   }
 
   create() {
@@ -188,6 +189,40 @@ export default class GameScene extends Phaser.Scene {
 
     // Input keyboard events
     this.cursors = this.input.keyboard.createCursorKeys();
+
+    // Pointer input for mobile/touch devices
+    this.input.on('pointerdown', this.handlePointerDown, this);
+
+    // Optional jump button (hidden on desktop)
+    this.jumpButton = this.add
+      .sprite(750, 520, 'upKeyButton')
+      .setInteractive()
+      .setScrollFactor(0)
+      .setAlpha(0.5)
+      .setScale(0.7);
+    this.jumpButton.on('pointerdown', this.handlePointerDown, this);
+    if (this.scale.isDesktop) {
+      this.jumpButton.setVisible(false);
+    }
+  }
+
+  handlePointerDown() {
+    const now = this.time.now;
+    if (this.player.body.touching.down) {
+      this.playerJumps = 0;
+      this.attemptJump();
+    } else if (now - this.lastPointerTime < 300 && this.playerJumps === 1) {
+      this.attemptJump();
+    }
+    this.lastPointerTime = now;
+  }
+
+  attemptJump() {
+    if (this.playerJumps < 2) {
+      this.player.setVelocityY(-500);
+      this.playerJumps += 1;
+      this.player.anims.stop();
+    }
   }
 
   update() {
@@ -205,19 +240,7 @@ export default class GameScene extends Phaser.Scene {
     this.didJump = Phaser.Input.Keyboard.JustDown(this.cursors.up);
 
     if (this.didJump) {
-      if (
-        this.player.body.touching.down
-        || (this.playerJumps > 0 && this.playerJumps < 2)
-      ) {
-        if (this.player.body.touching.down) {
-          this.playerJumps = 0;
-        }
-        this.player.setVelocityY(500 * -1);
-        this.playerJumps += 1;
-
-        // stops animation
-        this.player.anims.stop();
-      }
+      this.attemptJump();
     }
     this.dungGroup.incX(-6);
     this.dungGroup.getChildren().forEach((dungCoin) => {
